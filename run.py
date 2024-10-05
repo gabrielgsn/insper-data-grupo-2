@@ -2,7 +2,7 @@ import utils as u
 
 
 #Inserir CEP desejado na linha abaixo
-u.extract_data("04277010")
+u.extract_data("01410020")
 
 #Exibir os preços médios dos imóveis por bairro
 for bairro, preco_medio_m2 in u.precos_medios():
