@@ -7,6 +7,9 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from pprint import pprint
 import sqlite3
+from geopy.geocoders import Nominatim
+import geopandas as gpd
+from shapely.geometry import Point
 
 
 def getDadosCEP(cep):
@@ -18,14 +21,71 @@ def getDadosCEP(cep):
 			return dados_json
 		else:
 			print('Erro ao buscar CEP')
+               
+def getCEP(rua):
+    nominatim_url = "https://nominatim.openstreetmap.org/search"
+    headers = {'User-Agent': 'MyGeocodingApp/1.0 (ggsnasser@gmail.com)'}
+    
+    params = {
+        'q': rua + ', ' + "Regiao Metropolitana de Sao Paulo",            
+        'format': 'json',       
+        'addressdetails': 1
+    }
+    
+    # Fazendo a requisição com o cabeçalho User-Agent
+    response = requests.get(nominatim_url, headers=headers, params=params)
+    return response.json()[0]['address']['postcode']
+
+def geocode_address(address):
+    try:
+        geolocator = Nominatim(user_agent="Creating a conversion table for São Paulo")
+        location = geolocator.geocode(address)
+        
+        if location:
+            return (location.latitude, location.longitude)
+        else:
+            return None
+    except:
+        return None
+    
+def find_sector(coordenadas, setores_gdf):
+    # Criar um ponto com a lat e long fornecida
+    try:
+        lat, lon = coordenadas
+        point = Point(lon, lat)  # Note que o formato é (longitude, latitude)
+        
+        # Verificar qual setor contém o ponto
+        setor_encontrado = setores_gdf[setores_gdf.contains(point)]
+        
+        if not setor_encontrado.empty:
+            return setor_encontrado["CD_SETOR"].values[0]
+        else:
+            return None
+    except:
+        return None
+    
+def get_setor(rua):
+    setores = gpd.read_file('dados\geo\SP_Malha_Preliminar_2022.shp')
+    sp = setores[setores["NM_MUN"] == "São Paulo"]
+    sp = sp.to_crs(epsg=4326)
+    coordenadas = geocode_address(rua)
+    setor = find_sector(coordenadas, sp)
+    return setor
+    
 
 def scraper(bairro):
     driver = webdriver.Chrome()
 
+    url = 'https://www.quintoandar.com.br/comprar/imovel/'+bairro+'-sao-paulo-sp-brasil'
+    req = requests.get(url)
+    soup = BeautifulSoup(req.content, 'html.parser')
+    numero = soup.find("div", class_="Toolbar_title__hZZcF").text.split(" ")[0]
+
     driver.get('https://www.quintoandar.com.br/comprar/imovel/'+bairro+'-sao-paulo-sp-brasil')
     time.sleep(5)
 
-    for i in range(9):
+    # for i in range(int(numero.replace('.', ''))//12):
+    for i in range(2):
         try:
             ver_mais_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Ver mais')]")
             ver_mais_button.click()  # Clica no botão
@@ -56,13 +116,48 @@ def find_m2_imovel(imovel):
     alt_text = alt_text.split("m²")[0].split(" ")
     return alt_text[-1]
 
+def find_endereco(imovel):
+    bairro = imovel.find("h2", class_="CozyTypography xih2fc _72Hu5c Ci-jp3").text
+    bairro = bairro.replace('\n','')
+    bairro = bairro.replace(" · ", ", ")
+    bairro = bairro.lstrip()
+    endereco = bairro.rstrip()
+    return endereco
+
+def find_bairro(imovel):
+    bairro = imovel.find("h2", class_="CozyTypography xih2fc _72Hu5c Ci-jp3").text
+    bairro = bairro.replace('\n','')
+    bairro = bairro.replace(" · ", ", ")
+    bairro = bairro.lstrip()
+    bairro = bairro.rstrip()
+    bairro = bairro.split(", ")[1]
+    return bairro
+
 conn = sqlite3.connect('data.db')
 cursor = conn.cursor()
 
-def add_data(cep, rua, bairro, cidade, estado, regiao, preco, m2, preco_m2):
+def create_table():
     cursor.execute('''
-    INSERT INTO data (cep, rua, bairro, cidade, estado, regiao, preco, m2, preco_m2) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (cep, rua, bairro, cidade, estado, regiao, preco, m2, preco_m2))
+    CREATE TABLE IF NOT EXISTS data (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    cep TEXT NOT NULL,
+    setor TEXT NOT NULL,
+    rua TEXT NOT NULL,
+    bairro TEXT NOT NULL,
+    cidade TEXT NOT NULL,
+    estado TEXT NOT NULL,
+    regiao TEXT NOT NULL,
+    preco FLOAT NOT NULL,
+    m2 FLOAT NOT NULL,
+    preco_m2 FLOAT NOT NULL
+    )
+    ''')
+    conn.commit()
+
+def add_data(cep, setor, rua, bairro, cidade, estado, regiao, preco, m2, preco_m2):
+    cursor.execute('''
+    INSERT INTO data (cep, setor, rua, bairro, cidade, estado, regiao, preco, m2, preco_m2) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (cep, setor, rua, bairro, cidade, estado, regiao, preco, m2, preco_m2))
     conn.commit()
 
 def remove_data(id):
@@ -97,7 +192,10 @@ def extract_data(cep):
     for casa in casas:
         preco = find_preco_imovel(casa)
         m2 = find_m2_imovel(casa)
+        bairro = find_bairro(casa)
         rua = find_rua_imovel(casa)
+        endereco = rua + ", São Paulo, Brasil, Região Metropolitana de São Paulo"
+        setor = get_setor(endereco)
         preco_m2 = float(preco) / float(m2)
         
         # Check if the data already exists
@@ -108,7 +206,8 @@ def extract_data(cep):
         
         if cursor.fetchone() is None:
             # Data doesn't exist, so insert it
-            add_data(cep, rua, bairro, cidade, estado, regiao, preco, m2, preco_m2)
+            cep = getCEP(rua)
+            add_data(cep, setor, rua, bairro, cidade, estado, regiao, preco, m2, preco_m2)
 
 def precos_medios():
     cursor.execute('''
