@@ -92,7 +92,7 @@ def scraper(bairro):
     time.sleep(5)
 
     # for i in range(int(numero.replace('.', ''))//12):
-    for i in range(30):
+    for i in range(25):
         try:
             ver_mais_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Ver mais')]")
             ver_mais_button.click()  # Clica no botão
@@ -105,6 +105,33 @@ def scraper(bairro):
     soup = soup.find('html')
     soup = soup.prettify()
     return soup
+
+def scraper2(endereco):
+    driver = webdriver.Chrome()
+
+    url = 'https://www.quintoandar.com.br/comprar/imovel/'+ endereco
+    req = requests.get(url)
+    soup = BeautifulSoup(req.content, 'html.parser')
+    numero = soup.find("div", class_="Toolbar_title__hZZcF").text.split(" ")[0]
+
+    driver.get('https://www.quintoandar.com.br/comprar/imovel/'+endereco+'-sao-paulo-sp-brasil')
+    time.sleep(5)
+
+    # for i in range(int(numero.replace('.', ''))//12):
+    for i in range(25):
+        try:
+            ver_mais_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Ver mais')]")
+            ver_mais_button.click()  # Clica no botão
+            time.sleep(3)  # Aguarde o conteúdo carregar após o clique
+        except:
+            pass
+
+    html_content = driver.page_source
+    soup = BeautifulSoup(html_content, 'html.parser')
+    soup = soup.find('html')
+    soup = soup.prettify()
+    return soup
+
 
 def find_rua_imovel(imovel):
     try:
@@ -204,12 +231,15 @@ def get_id(cep):
 def extract_data(cep):
     try:
         dados = getDadosCEP(cep)
+        rua = dados['logradouro'].replace(" ", "-").lower()
         bairro = dados['bairro']
         cidade = dados['localidade']
+        cidade_busca = cidade.replace(" ", "-").lower()
+        endereco = rua + "-" + cidade_busca
         estado = dados['uf']
         regiao = dados['regiao']
         bairro = bairro.replace(" ", "-").lower()
-        soup = scraper(bairro)
+        soup = scraper2(endereco)
         soup = BeautifulSoup(soup, 'html.parser')
         casas = soup.find_all(attrs={"data-testid": "house-card-container"})
         for casa in casas:
