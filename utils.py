@@ -10,6 +10,18 @@ import sqlite3
 from geopy.geocoders import Nominatim
 import geopandas as gpd
 from shapely.geometry import Point, box
+from selenium.webdriver.chrome.options import Options
+
+chrome_options = Options()
+chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+chrome_options.add_argument("start-maximized")
+chrome_options.add_argument("disable-infobars")
+chrome_options.add_argument("--disable-extensions")
+chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+chrome_options.add_experimental_option('useAutomationExtension', False)
+
+
+
 
 
 def getDadosCEP(cep):
@@ -92,7 +104,7 @@ def scraper(bairro):
     time.sleep(5)
 
     # for i in range(int(numero.replace('.', ''))//12):
-    for i in range(25):
+    for i in range(15):
         try:
             ver_mais_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Ver mais')]")
             ver_mais_button.click()  # Clica no botão
@@ -107,7 +119,7 @@ def scraper(bairro):
     return soup
 
 def scraper2(endereco):
-    driver = webdriver.Chrome()
+    driver = webdriver.Chrome(options=chrome_options)
 
     url = 'https://www.quintoandar.com.br/comprar/imovel/'+ endereco
     req = requests.get(url)
@@ -122,6 +134,7 @@ def scraper2(endereco):
         try:
             ver_mais_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Ver mais')]")
             ver_mais_button.click()  # Clica no botão
+            print("Clicou em Ver Mais")
             time.sleep(3)  # Aguarde o conteúdo carregar após o clique
         except:
             pass
@@ -229,7 +242,6 @@ def get_id(cep):
     return data
 
 def extract_data(cep):
-    try:
         dados = getDadosCEP(cep)
         rua = dados['logradouro'].replace(" ", "-").lower()
         bairro = dados['bairro']
@@ -239,31 +251,34 @@ def extract_data(cep):
         estado = dados['uf']
         regiao = dados['regiao']
         bairro = bairro.replace(" ", "-").lower()
+        print("Extraindo de " + endereco)
         soup = scraper2(endereco)
         soup = BeautifulSoup(soup, 'html.parser')
         casas = soup.find_all(attrs={"data-testid": "house-card-container"})
         for casa in casas:
-            preco = find_preco_imovel(casa)
-            m2 = find_m2_imovel(casa)
-            bairro = find_bairro(casa)
-            rua = find_rua_imovel(casa)
-            endereco = rua + ", São Paulo, Brasil, Região Metropolitana de São Paulo"
-            setor = get_setor(endereco)
-            preco_m2 = float(preco) / float(m2)
-            
-            # Check if the data already exists
-            cursor.execute('''
-            SELECT id FROM data 
-            WHERE cep = ? AND bairro = ? AND preco = ? AND m2 = ?
-            ''', (cep, bairro, preco, m2))
-            
-            if cursor.fetchone() is None:
-                # Data doesn't exist, so insert it
-                cep = getCEP(rua)
-                add_data(cep, setor, rua, bairro, cidade, estado, regiao, preco, m2, preco_m2)
-    except:
-        print("Erro ao extrair dados do CEP")
-        pass
+            try:
+                preco = find_preco_imovel(casa)
+                m2 = find_m2_imovel(casa)
+                bairro = find_bairro(casa)
+                rua = find_rua_imovel(casa)
+                endereco = rua + ", São Paulo, Brasil, Região Metropolitana de São Paulo"
+                setor = get_setor(endereco)
+                preco_m2 = float(preco) / float(m2)
+                
+                # Check if the data already exists
+                cursor.execute('''
+                SELECT id FROM data 
+                WHERE cep = ? AND bairro = ? AND preco = ? AND m2 = ?
+                ''', (cep, bairro, preco, m2))
+                
+                if cursor.fetchone() is None:
+                    # Data doesn't exist, so insert it
+                    cep = getCEP(rua)
+                    add_data(cep, setor, rua, bairro, cidade, estado, regiao, preco, m2, preco_m2)
+                    print("Dados inseridos com sucesso")
+            except:
+                print("Erro ao extrair dados do CEP (utils)")
+                pass
 
 
 # Analise de Resultados
@@ -282,13 +297,11 @@ def create_buffer(lat, lon, buffer_size_meters=500):
 # Função para estimar o preço médio por m² dentro do buffer
 def estimate_price(address):
     # Passo 1: Geocodificar o endereço para obter latitude e longitude
-    coordenadas = geocode_address(address)
-    if not coordenadas:
+    lat, lon = geocode_address(address)
+    if not lat or not lon:
         print("Endereço não encontrado.")
         return None
-    
-    lat, lon = coordenadas
-    
+        
     # Passo 2: Criar um buffer de 500 metros ao redor do ponto
     buffer = create_buffer(lat, lon)
     

@@ -1,7 +1,7 @@
 import utils as u
 
 if __name__ == "__main__":
-    endereco = "Avenida Divino Salvador 731, Sao Paulo, Brasil"
+    endereco = "Rua Jandiatuba, Sao Paulo, Brasil"
     preco_medio = u.estimate_price(endereco)
     
     if preco_medio:
