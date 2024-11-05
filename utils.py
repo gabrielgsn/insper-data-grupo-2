@@ -89,6 +89,7 @@ def get_setor(rua):
         setor = find_sector(coordenadas, sp)
         return setor
     except:
+        print("Erro ao buscar setor")
         return None
     
 
@@ -130,7 +131,7 @@ def scraper2(endereco):
     time.sleep(5)
 
     # for i in range(int(numero.replace('.', ''))//12):
-    for i in range(25):
+    for i in range(15):
         try:
             ver_mais_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Ver mais')]")
             ver_mais_button.click()  # Clica no botão
@@ -251,7 +252,6 @@ def extract_data(cep):
         estado = dados['uf']
         regiao = dados['regiao']
         bairro = bairro.replace(" ", "-").lower()
-        print("Extraindo de " + endereco)
         soup = scraper2(endereco)
         soup = BeautifulSoup(soup, 'html.parser')
         casas = soup.find_all(attrs={"data-testid": "house-card-container"})
