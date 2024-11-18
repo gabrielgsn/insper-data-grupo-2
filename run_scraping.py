@@ -34,7 +34,7 @@ ceps_sao_paulo = {
         "Perdizes": ["05008000", "05009000", "05010000", "05011000", "05012000"]
     },
     "Centro": {
-        # "Sé": ["01001000", "01002000", "01003000", "01004000", "01005000"],
+        "Sé": ["01001000", "01002000", "01003000", "01004000", "01005000"],
         "República": ["01045000", "01046000", "01047000", "01048000", "01049000"],
         "Bela Vista": ["01310000", "01311000", "01312000", "01313000", "01314000"],
         "Liberdade": ["01503000", "01504000", "01505000", "01506000", "01507000"],
@@ -43,9 +43,15 @@ ceps_sao_paulo = {
 }
 
 ceps_centro = ceps_sao_paulo["Centro"]
-# Feitos ate agora: Centro (Completo)
+ceps_zona_norte = ceps_sao_paulo["Zona Norte"]
+ceps_zona_sul = ceps_sao_paulo["Zona Sul"]
+ceps_zona_leste = ceps_sao_paulo["Zona Leste"]
+ceps_zona_oeste = ceps_sao_paulo["Zona Oeste"]
 
-for ceps in ceps_centro.values():
+# Feitos ate agora: Centro, Zona Norte, Zona Leste
+
+
+for ceps in ceps_zona_leste.values():
     for cep in ceps:
         try:
             u.extract_data(cep)

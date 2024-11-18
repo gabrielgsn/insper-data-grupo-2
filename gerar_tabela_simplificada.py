@@ -10,27 +10,31 @@ def create_simplified_table(setores_gdf):
     conn_simplified = sqlite3.connect('dados_final.db')
     cursor_simplified = conn_simplified.cursor()
 
-    # Criar a nova tabela com setores, preço médio por m², latitude e longitude
+    # Criar a nova tabela com setores, preço médio por m², quantidade de imóveis, maior e menor preço por m², latitude e longitude
     cursor_simplified.execute('''
     CREATE TABLE IF NOT EXISTS dados_final (
         setor TEXT PRIMARY KEY,
         preco_medio_m2 FLOAT,
+        quantidade_imoveis INTEGER,
+        maior_preco_m2 FLOAT,
+        menor_preco_m2 FLOAT,
         lat FLOAT,
         lon FLOAT
     )
     ''')
 
-    # Selecionar os dados de setor e preço por m² do banco de dados original
+    # Selecionar os dados de setor e calcular a média, quantidade, maior e menor preço por m² do banco de dados original
     cursor.execute('''
-    SELECT setor, AVG(preco_m2) AS preco_medio_m2
+    SELECT setor, AVG(preco_m2) AS preco_medio_m2, COUNT(preco_m2) AS quantidade_imoveis,
+           MAX(preco_m2) AS maior_preco_m2, MIN(preco_m2) AS menor_preco_m2
     FROM data
     GROUP BY setor
     ''')
 
     setores_precos = cursor.fetchall()
 
-    # Percorrer os setores e calcular a média do preço por m²
-    for setor, preco_medio_m2 in setores_precos:
+    # Percorrer os setores e calcular as informações necessárias
+    for setor, preco_medio_m2, quantidade_imoveis, maior_preco_m2, menor_preco_m2 in setores_precos:
         # Encontrar o setor correspondente no GeoDataFrame (setores_gdf)
         setor_data = setores_gdf[setores_gdf['CD_SETOR'] == setor]
         
@@ -41,9 +45,10 @@ def create_simplified_table(setores_gdf):
             
             # Inserir os dados na tabela simplificada
             cursor_simplified.execute('''
-            INSERT OR REPLACE INTO dados_final (setor, preco_medio_m2, lat, lon)
-            VALUES (?, ?, ?, ?)
-            ''', (setor, preco_medio_m2, lat, lon))
+            INSERT OR REPLACE INTO dados_final (setor, preco_medio_m2, quantidade_imoveis, 
+                                                maior_preco_m2, menor_preco_m2, lat, lon)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            ''', (setor, preco_medio_m2, quantidade_imoveis, maior_preco_m2, menor_preco_m2, lat, lon))
     
     # Fechar as conexões com os bancos de dados
     conn.commit()

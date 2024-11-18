@@ -131,7 +131,7 @@ def scraper2(endereco):
     time.sleep(5)
 
     # for i in range(int(numero.replace('.', ''))//12):
-    for i in range(15):
+    for i in range(20):
         try:
             ver_mais_button = driver.find_element(By.XPATH, "//button[contains(text(), 'Ver mais')]")
             ver_mais_button.click()  # Clica no botão
