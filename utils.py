@@ -12,6 +12,7 @@ import geopandas as gpd
 from shapely.geometry import Point, box
 from selenium.webdriver.chrome.options import Options
 
+# Configurações do Selenium
 chrome_options = Options()
 chrome_options.add_argument("--disable-blink-features=AutomationControlled")
 chrome_options.add_argument("start-maximized")
@@ -20,10 +21,7 @@ chrome_options.add_argument("--disable-extensions")
 chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
 chrome_options.add_experimental_option('useAutomationExtension', False)
 
-
-
-
-
+# Funções de Utilidade
 def getDadosCEP(cep):
 		url = (f'http://www.viacep.com.br/ws/{cep}/json')
 		
