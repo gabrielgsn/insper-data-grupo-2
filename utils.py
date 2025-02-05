@@ -5,7 +5,6 @@ import re
 import time
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from pprint import pprint
 import sqlite3
 from geopy.geocoders import Nominatim
 import geopandas as gpd
@@ -31,11 +30,13 @@ def getDadosCEP(cep):
 			return dados_json
 		else:
 			print('Erro ao buscar CEP')
-               
+
+email = "" # Preencha com o seu e-mail
+
 def getCEP(rua):
     try:
         nominatim_url = "https://nominatim.openstreetmap.org/search"
-        headers = {'User-Agent': 'MyGeocodingApp/1.0 (ggsnasser@gmail.com)'}
+        headers = {'User-Agent': 'MyGeocodingApp/1.0 ({0})'.format(email)}
         
         params = {
             'q': rua + ', ' + "Regiao Metropolitana de Sao Paulo",            

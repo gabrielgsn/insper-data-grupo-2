@@ -2,8 +2,8 @@ import utils as u
 
 
 u.create_table()
-#Inserir CEP desejado na linha abaixo
 
+#Inserir CEP desejado na linha abaixo
 ceps_sao_paulo = {
     "Zona Norte": {
         "Santana": ["02012000", "02013000", "02014000", "02015000", "02016000"],
