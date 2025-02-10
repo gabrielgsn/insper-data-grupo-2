@@ -3,3 +3,7 @@
 *.prj
 *.cpg
 *.dbf
+*.geojson
+*.html
+*.xlsx
+*.csv
