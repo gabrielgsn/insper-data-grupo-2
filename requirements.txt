@@ -7,3 +7,5 @@ geopandas==1.0.1
 bs4
 requests
 branca
+openpyxl
+matplotlib
