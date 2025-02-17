@@ -42,25 +42,25 @@ gera_plot_por_regiao <- function(regiao, titulo) {
     scale_fill_manual(values = c("IPTU" = "blue", "ITBI" = "red")) +
     theme_minimal() +
     theme(legend.position = ifelse(length(regiao) > 1, "bottom", "right"), 
-          axis.text.y = element_text(size = 9, hjust = 1, face = "bold"),
+          axis.text.y = element_text(size = 6.5, hjust = 1, face = "bold"),
           strip.text = element_text(size = 10, face = "bold"),
           plot.title = element_text(hjust = 0.5, size = 11, face = "bold"), 
           legend.title = element_text(size=9),
           legend.text = element_text(size=9))
 }
 
-plot_leste_oeste <- gera_plot_por_regiao(c("Leste", "Oeste"), "Preço Médio do m² por Distrito e Região (Leste e Oeste)")
+plot_centro_oeste <- gera_plot_por_regiao(c("Centro", "Oeste"), "Preço Médio do m² por Distrito e Região (Centro e Oeste)")
 plot_norte_sul <- gera_plot_por_regiao(c("Norte", "Sul"), "Preço Médio do m² por Distrito e Região (Norte e Sul)")
-plot_centro <- gera_plot_por_regiao(c("Centro"), "Preço Médio do m² por Distrito (Centro)")
+plot_leste <- gera_plot_por_regiao(c("Leste"), "Preço Médio do m² por Distrito (Leste)")
 
 # Display
-plot_leste_oeste
+plot_centro_oeste
 plot_norte_sul
-plot_centro
+plot_leste
 
-ggsave(filename = "graficos/plot_leste_oeste_medias.svg", plot_leste_oeste)
-ggsave(filename = "graficos/plot_norte_sul_medias.svg", plot_norte_sul)
-ggsave(filename = "graficos/plot_centro_medias.svg", plot_centro)
+ggsave(filename = "graficos/plot_centro_oeste_medias.png", plot_centro_oeste)
+ggsave(filename = "graficos/plot_norte_sul_medias.png", plot_norte_sul)
+ggsave(filename = "graficos/plot_leste_medias.png", plot_leste)
 
 # Desvio padrão
 
@@ -90,21 +90,23 @@ gera_plot_por_regiao2 <- function(regiao, titulo) {
          x = "Distrito", y = "Desvio Padrão do Preço Médio do m² (R$)", fill = "Referência de Preço") +
     scale_fill_manual(values = c("IPTU" = "blue", "ITBI" = "red")) +
     theme_minimal() +
-    theme(legend.position = "bottom",
-          axis.text.y = element_text(size = 7.5, hjust = 1),
+    theme(legend.position = ifelse(length(regiao) > 1, "bottom", "right"), 
+          axis.text.y = element_text(size = 6.5, hjust = 1, face = "bold"),
           strip.text = element_text(size = 10, face = "bold"),
-          plot.title = element_text(hjust = 0.5, size = 11, face = "bold"))
+          plot.title = element_text(hjust = 0.5, size = 11, face = "bold"), 
+          legend.title = element_text(size=9),
+          legend.text = element_text(size=9))
 }
 
-plot_leste_oeste <- gera_plot_por_regiao2(c("Leste", "Oeste"), "Preço Médio do m² por Distrito e Região (Leste e Oeste)")
+plot_centro_oeste <- gera_plot_por_regiao2(c("Centro", "Oeste"), "Preço Médio do m² por Distrito e Região (Centro e Oeste)")
 plot_norte_sul <- gera_plot_por_regiao2(c("Norte", "Sul"), "Preço Médio do m² por Distrito e Região (Norte e Sul)")
-plot_centro <- gera_plot_por_regiao2(c("Centro"), "Preço Médio do m² por Distrito (Centro)")
+plot_leste <- gera_plot_por_regiao2(c("Leste"), "Preço Médio do m² por Distrito (Leste)")
 
 # Display
-plot_leste_oeste
+plot_centro_oeste
 plot_norte_sul
-plot_centro
+plot_leste
 
-ggsave(filename = "graficos/plot_leste_oeste_desvios.svg", plot_leste_oeste)
-ggsave(filename = "graficos/plot_norte_sul_desvios.svg", plot_norte_sul)
-ggsave(filename = "graficos/plot_centro_desvios.svg", plot_centro)
+ggsave(filename = "graficos/plot_centro_oeste_desvios.png", plot_centro_oeste)
+ggsave(filename = "graficos/plot_norte_sul_desvios.png", plot_norte_sul)
+ggsave(filename = "graficos/plot_leste_desvios.png", plot_leste)
